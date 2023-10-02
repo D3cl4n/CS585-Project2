@@ -1,5 +1,5 @@
-facein= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/facein.csv' using PigStorage (',') as (ID:chararray,name:chararray,country:chararray,countrycode:chararray,hobby:chararray);
-associates= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/associates.csv' using PigStorage (',') as (FriendRel:chararray,PersonA_ID:chararray,PersonB_ID:chararray,DateOfFriendship:int,Desc:chararray);
+facein= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/facein.csv' using PigStorage (',') as (ID:int,name:chararray,country:chararray,countrycode:chararray,hobby:chararray);
+associates= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/associates.csv' using PigStorage (',') as (FriendRel:int,PersonA_ID:int,PersonB_ID:int,DateOfFriendship:int,Desc:chararray);
 joinedtables= join facein by ID LEFT, associates by PersonA_ID parallel 10;
 joinedtablesshort= foreach joinedtables generate ID, name, PersonA_ID;
 happinessfactor = FOREACH (GROUP joinedtablesshort BY name) GENERATE group AS name, COUNT(joinedtablesshort.PersonA_ID) as NumOfRelation;
