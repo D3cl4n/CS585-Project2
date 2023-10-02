@@ -2,3 +2,5 @@ data = LOAD '/home/ds503/shared_folder/facein.csv' USING PigStorage(',') AS (ID,
 dump data;
 results = FILTER data BY Nationality == 'Albanian';
 dump results;
+final = foreach results generate Name, Hobby;
+dump final;
