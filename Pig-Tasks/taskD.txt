@@ -3,4 +3,4 @@ associates= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/associates.
 joinedtables= join facein by ID LEFT, associates by PersonA_ID parallel 10;
 joinedtablesshort= foreach joinedtables generate ID, name, PersonA_ID;
 happinessfactor = FOREACH (GROUP joinedtablesshort BY name) GENERATE group AS name, COUNT(joinedtablesshort.PersonA_ID) as NumOfRelation;
-dump happinessfactor
+dump happinessfactor;
