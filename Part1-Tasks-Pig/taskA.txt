@@ -1,3 +1,4 @@
-FaceIn = LOAD '/user/cs4433/FaceIn.csv' USING PigStorage(',') AS (ID, Name, Nationality, Country Code, Hobby);
-results = filter FaceIn by Nationality = 'Bulgarian';
-store results into '/user/cs4433/taskA.txt';
+data = LOAD '/home/ds503/shared_folder/facein.csv' USING PigStorage(',') AS (ID,Name,Nationality,CountryCode,Hobby);
+dump data;
+results = FILTER data BY Nationality == 'Albanian';
+dump results;
