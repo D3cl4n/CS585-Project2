@@ -8,5 +8,5 @@ joinedtablesleft= join jndtblsshort by ID LEFT, access by ByWho parallel 10;
 joinedtablesfilter = filter joinedtablesleft by ByWho IS NULL;
 dump joinedtablesfilter;
 taskF= foreach joinedtablesfilter generate ID, name;
-
-dump taskF;
+taskF_dist= DISTINCT taskF;
+dump taskF_dist;
