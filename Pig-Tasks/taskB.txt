@@ -6,4 +6,4 @@ orderedAccesses = ORDER totalAccesses BY count DESC;
 top10Pages = LIMIT orderedAccesses 10;
 joinedData = Join faceIn BY ID,top10Pages by pageID;
 result = FOREACH joinedData GENERATE ID,Name,Nationality;
-dump result
+dump result;
