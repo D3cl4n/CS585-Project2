@@ -1,0 +1,5 @@
+data = LOAD '/home/ds503/shared_folder/facein.csv' USING PigStorage(',') AS (ID,Name,Nationality,CountryCode,Hobby);
+dump data;
+codes = GROUP data BY CountryCode;
+finalData = FOREACH codes GENERATE group AS CountryCode, COUNT(data) AS count;
+dump finalData;
