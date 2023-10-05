@@ -1,3 +1,5 @@
+import math
+
 # test code for getting the expected output for task H
 def main():
     total_relationships = 0
@@ -23,11 +25,11 @@ def main():
             elif personB not in user_relationships.keys():
                 user_relationships.update({personB : 1})
 
-    average_relationships = total_relationships / len(user_relationships)
+    average_relationships = math.floor(total_relationships / len(user_relationships))
     print("Users with more than average relationships")
     for k in user_relationships.keys():
         if user_relationships[k] > average_relationships:
-            print(f"User ID: "
+            print(f"User ID: {k}, User Relationships: {user_relationships[k]}")
 
 if __name__ == '__main__':
     main()
