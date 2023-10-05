@@ -1,0 +1,11 @@
+-- First, determine which pageIDs found in access.csv have been visited in 90 days
+-- With the list of pagesIDs that have been visited recently, left-join with facein.csv on ID
+-- In the resulting table, the rows without values from access.csv should be filtered for as the output
+
+access = LOAD 'C:/Users/Rakesh/IdeaProjects/CS585-Project2/Part1-Tasks-Pig/access.csv' USING PigStorage(',') AS (AccessId,ByWho,WhatPage,TypeOfAccess,AccessTime);
+faceIn = LOAD 'C:/Users/Rakesh/IdeaProjects/CS585-Project2/Part1-Tasks-Pig/facein.csv' USING PigStorage(',') AS (ID,Name,Country,CountryCode,Hobby);
+visitedWithin90Days = FILTER access BY DaysBetween(CurrentTime(),ToDate(AccessTime,'yyyy-MM-dd HH:mm:ss')) <= 90;
+leftJoinFaceIn = JOIN faceIn BY ID LEFT OUTER, visitedWithin90Days BY WhatPage;
+outdatedPages = FILTER leftJoinFaceIn BY AccessId is null;
+result = FOREACH outdatedPages GENERATE ID,Name;
+dump result;

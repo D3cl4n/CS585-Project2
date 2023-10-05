@@ -1,0 +1,9 @@
+faceIn = LOAD 'C:/Users/Rakesh/IdeaProjects/CS585-Project2/Part1-Tasks-Pig/facein.csv' USING PigStorage(',') AS (ID,Name,Nationality,CountryCode,Hobby);
+access = LOAD 'C:/Users/Rakesh/IdeaProjects/CS585-Project2/Part1-Tasks-Pig/access.csv' USING PigStorage(',') AS (AccessID,ByWho,WhatPage,TypeOfAccess,AccessTime);
+accessIDs = GROUP access BY WhatPage;
+totalAccesses = FOREACH accessIDs GENERATE group as pageID,COUNT(access) as count;
+orderedAccesses = ORDER totalAccesses BY count DESC;
+top10Pages = LIMIT orderedAccesses 10;
+joinedData = Join faceIn BY ID,top10Pages by pageID;
+result = FOREACH joinedData GENERATE ID,Name,Nationality;
+dump result
