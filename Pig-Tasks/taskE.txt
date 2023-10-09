@@ -1,0 +1,17 @@
+facein= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/facein.csv' using PigStorage (',') as (ID:int,name:chararray,country:chararray,countrycode:chararray,hobby:chararray);
+
+access= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/access.csv' using PigStorage (',') as (AccessId:int,ByWho:int,WhatPage:int,TypeOfAccess:chararray,AccessTime:chararray);
+
+joinedtablesinner= join facein by ID, access by ByWho parallel 10;
+
+jndtblsshort= foreach joinedtablesinner generate ID, name, WhatPage;
+jndtblgrp= GROUP jndtblsshort BY name;
+jndtblgrp_dist= foreach jndtblgrp {  unique_pages = DISTINCT jndtblsshort.WhatPage;
+    all_pages = jndtblsshort.WhatPage;
+    generate group as name, COUNT(unique_pages) as unique_cnt,COUNT(all_pages) as total_cnt;
+};
+
+
+taskE = FOREACH jndtblgrp_dist GENERATE name,unique_cnt as UniqueVisits, total_cnt as TotalVisits;
+
+dump taskE;
