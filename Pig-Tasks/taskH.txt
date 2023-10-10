@@ -1,0 +1,21 @@
+data = LOAD '/home/ds503/shared_folder/associates.csv' USING PigStorage(',') AS (FriendRel,PersonA,PersonB,Date,Description);
+totalRelationships = FOREACH (GROUP data ALL) GENERATE COUNT(data) AS TotalCount;
+
+A = GROUP data BY PersonA;
+resultsA = FOREACH A GENERATE data.PersonA,COUNT(data.PersonA) AS dataA;
+B = GROUP data BY PersonB;
+resultsB = FOREACH B GENERATE data.PersonB,COUNT(data.PersonB) AS dataB;
+
+distinctA = DISTINCT A;
+distinctB = DISTINCT B;
+countDistinctA = FOREACH (GROUP distinctA ALL) GENERATE COUNT(distinctA) AS countA;
+countDistinctB = FOREACH (GROUP distinctB ALL) GENERATE COUNT(distinctB) AS countB;
+
+T = FOREACH (GROUP countDistinctA ALL) GENERATE (SUM(countDistinctA.countA) + SUM(countDistinctB.countB)) AS allUsers;
+
+filteredA = FILTER resultsA BY dataA > (totalRelationships.TotalCount / T.allUsers);
+filteredB = FILTER resultsB BY dataB > (totalRelationships.TotalCount / T.allUsers);
+
+
+
+
