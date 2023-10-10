@@ -11,13 +11,9 @@ distinctB = DISTINCT B;
 countDistinctA = FOREACH (GROUP distinctA ALL) GENERATE COUNT(distinctA) AS countA;
 countDistinctB = FOREACH (GROUP distinctB ALL) GENERATE COUNT(distinctB) AS countB;
 
-totalUsers = (countDistinctA.countA + countDistinctB.countB);
+filteredA = FILTER resultsA BY dataA > (totalRelationships.TotalCount / (countDistinctA.countA + countDistinctB.countB));
+filteredB = FILTER resultsB BY dataB > (totalRelationships.TotalCount / (countDistinctA.countA + countDistinctB.countB));
+
+
 
 T = FOREACH (GROUP countDistinctA ALL) GENERATE (countDistinctA.countA + countDistinctB.countB) AS allUsers;
-
-filteredA = FILTER resultsA BY dataA > (totalRelationships.TotalCount / T.allUsers);
-filteredB = FILTER resultsB BY dataB > (totalRelationships.TotalCount / T.allUsers);
-
-
-
-
