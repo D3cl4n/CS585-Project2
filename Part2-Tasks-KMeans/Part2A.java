@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 // The reducer will group the data point coordinates by using the (key,value) pair received from the mapper
 // The reducer will then calculate the new centroid that should be at the center of the data points that were grouped with it
 
-public class Part2A {
+public class Project2Part2A {
 
     private static int[][] KCentroids;
 
@@ -75,26 +75,26 @@ public class Part2A {
             int Ysum = 0;
             int count = 0;
             for (Text val : values) {
-                dataPoints += val.toString() + "\n";
+                dataPoints += "(" + val.toString() + ")\t";
                 String[] csvLine = val.toString().split(",");
                 Xsum += Integer.parseInt(csvLine[0]);
                 Ysum += Integer.parseInt(csvLine[1]);
                 count++;
             }
-            newCentroid.set(Xsum/count + "," + Ysum/count);
+            newCentroid.set("New Centroid: (" + Xsum/count + "," + Ysum/count + ")");
             context.write(newCentroid, new Text(dataPoints));
         }
     }
 
     public void debug(String[] args) throws Exception {
-        int KValue = 2;
+        int KValue = 3;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Part2A");
         job.setJarByClass(Part2A.class);
         job.setMapperClass(KMeansMapper.class);
-        job.setCombinerClass(KMeansReducer.class);
+//        job.setCombinerClass(KMeansReducer.class);
         job.setReducerClass(KMeansReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
@@ -104,14 +104,14 @@ public class Part2A {
     }
 
     public static void main(String[] args) throws Exception {
-        int KValue = 2;
+        int KValue = 3;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Part2A");
         job.setJarByClass(Part2A.class);
         job.setMapperClass(KMeansMapper.class);
-        job.setCombinerClass(KMeansReducer.class);
+//        job.setCombinerClass(KMeansReducer.class);
         job.setReducerClass(KMeansReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
