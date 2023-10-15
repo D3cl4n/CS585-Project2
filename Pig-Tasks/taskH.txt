@@ -1,0 +1,28 @@
+associates = LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/associates.csv' USING PigStorage(',') AS (FriendRel,PersonA,PersonB,Date,Description);
+facein= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/facein.csv' using PigStorage (',') as (ID:int,name:chararray,country:chararray,countrycode:chararray,hobby:chararray);
+
+AllA = FOREACH associates GENERATE  PersonA;
+AllB = FOREACH associates GENERATE  PersonB;
+unionAB = Union AllA , AllB;
+unionAB_distinct= distinct unionAB;
+cnt_unionAB = FOREACH (GROUP unionAB_distinct ALL) GENERATE COUNT(unionAB_distinct);
+cnt_Allper = FOREACH (GROUP facein ALL) GENERATE COUNT(facein.ID);
+crs_cntunion_cntall = CROSS cnt_Allper, cnt_unionAB;
+dump crs_cntunion_cntall;
+tot_avg = FOREACH crs_cntunion_cntall GENERATE cnt_Allper.$0 / cnt_unionAB.$0;
+
+resultsA = FOREACH (GROUP associates BY PersonA) GENERATE group as PersonA, COUNT(associates.PersonA) as rel_cnt_A;
+
+resultsB = FOREACH (GROUP associates BY PersonB) GENERATE group as PersonB, COUNT(associates.PersonB) as rel_cnt_B;
+
+unionres= UNION resultsA , resultsB;
+
+unioncrss = cross unionres , tot_avg;
+
+popular = filter unioncrss by rel_cnt_A>$2;
+
+taskH = join popular by PersonA , facein by ID parallel 10;
+
+taskH = foreach taskH GENERATE name, rel_cnt_A , $2;
+
+dump taskH;
