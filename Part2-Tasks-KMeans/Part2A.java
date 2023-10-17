@@ -87,6 +87,7 @@ public class Project2Part2A {
     }
 
     public void debug(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
         int KValue = 3;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
@@ -100,6 +101,8 @@ public class Project2Part2A {
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
