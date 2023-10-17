@@ -21,6 +21,10 @@ public class Project2Part2C {
 
     private static int[][] KCentroids;
     private static boolean finished = false;
+    private static int KValue = 3;
+    private static int R = 4;
+    private static double threshold = 500;
+    private static boolean withinThreshold = false;
 
     private static void generateKCentroids(int K, int rangeX, int rangeY) {
         Random rand = new Random();
@@ -72,6 +76,8 @@ public class Project2Part2C {
         private String dataPoints = "Data Points: ";
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            int currentX = Integer.parseInt(key.toString().split(",")[0]);
+            int currentY = Integer.parseInt(key.toString().split(",")[1]);
             int Xsum = 0;
             int Ysum = 0;
             int count = 0;
@@ -82,28 +88,34 @@ public class Project2Part2C {
                 Ysum += Integer.parseInt(csvLine[1]);
                 count++;
             }
-            newCentroid.set("New Centroid: (" + Xsum/count + "," + Ysum/count + ")");
+            int newX = Xsum / count;
+            int newY = Ysum / count;
+
+            newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
+
+            // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
+            if(distanceFunction(new int[]{currentX, currentY}, new int[]{newX,newY}) < threshold) {
+                withinThreshold = true;
+            } else {
+                withinThreshold = false;
+            }
 
             if (finished) {
                 context.write(newCentroid, new Text(dataPoints));
             }
             else {
                 for (int i =0; i<KCentroids.length; i++) {
-                    int currentX = Integer.parseInt(key.toString().split(",")[0]);
-                    int currentY = Integer.parseInt(key.toString().split(",")[1]);
                     if (currentX == KCentroids[i][0] && currentY == KCentroids[i][1]) {
-                        KCentroids[i][0] = Xsum / count;
-                        KCentroids[i][1] = Ysum / count;
+                        KCentroids[i][0] = newX;
+                        KCentroids[i][1] = newY;
                     }
                 }
-                context.write(new Text(""),new Text(""));
+                context.write(newCentroid, new Text(dataPoints));
             }
         }
     }
 
     public void debug(String[] args) throws Exception {
-        int KValue = 3;
-        int R = 4; //number of Haloop iterations
         int count = 0;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
@@ -128,6 +140,10 @@ public class Project2Part2C {
                 FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
             }
             int i = job.waitForCompletion(true) ? 0 : 1;
+            if(withinThreshold) {
+                System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
+                break;
+            }
             count++;
             System.out.println("RValue:" + R);
             System.out.println("Count:" + count);
@@ -135,8 +151,6 @@ public class Project2Part2C {
     }
 
     public static void main(String[] args) throws Exception {
-        int KValue = 3;
-        int R = 4; //number of Haloop iterations
         int count = 0;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
