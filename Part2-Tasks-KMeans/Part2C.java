@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.Random;
+import java.io.File;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -95,6 +96,7 @@ public class Project2Part2C {
                         KCentroids[i][1] = Ysum / count;
                     }
                 }
+                context.write(new Text(""),new Text(""));
             }
         }
     }
@@ -108,7 +110,7 @@ public class Project2Part2C {
         //Here is where we perform a Haloop
         while (count < R)
         {
-            if (count == (R - 1)) //last iteration set boolean to true
+            if (count == (R - 1)) // last iteration set boolean to true
             {
                 finished = true;
             }
@@ -120,6 +122,11 @@ public class Project2Part2C {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path(args[0]));
+            if(finished) {
+                FileOutputFormat.setOutputPath(job, new Path(args[1]));
+            } else {
+                FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            }
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);
@@ -129,18 +136,34 @@ public class Project2Part2C {
 
     public static void main(String[] args) throws Exception {
         int KValue = 3;
+        int R = 4; //number of Haloop iterations
+        int count = 0;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
-        Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "Part2C");
-        job.setJarByClass(Project2Part2C.class);
-        job.setMapperClass(KMeansMapper.class);
-//        job.setCombinerClass(KMeansReducer.class);
-        job.setReducerClass(KMeansReducer.class);
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Text.class);
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        //Here is where we perform a Haloop
+        while (count < R)
+        {
+            if (count == (R - 1)) // last iteration set boolean to true
+            {
+                finished = true;
+            }
+            Configuration conf = new Configuration();
+            Job job = Job.getInstance(conf, "Part2C");
+            job.setJarByClass(Project2Part2C.class);
+            job.setMapperClass(KMeansMapper.class);
+            job.setReducerClass(KMeansReducer.class);
+            job.setOutputKeyClass(Text.class);
+            job.setOutputValueClass(Text.class);
+            FileInputFormat.addInputPath(job, new Path(args[0]));
+            if(finished) {
+                FileOutputFormat.setOutputPath(job, new Path(args[1]));
+            } else {
+                FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            }
+            int i = job.waitForCompletion(true) ? 0 : 1;
+            count++;
+            System.out.println("RValue:" + R);
+            System.out.println("Count:" + count);
+        }
     }
 }
