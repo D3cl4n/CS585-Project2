@@ -88,7 +88,7 @@ public class Project2Part2A {
 
     public void debug(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        int KValue = 3;
+        int KValue = 3; //test with 1, 10 and 100
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
