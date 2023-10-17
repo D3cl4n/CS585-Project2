@@ -22,7 +22,9 @@ unioncrss = cross unionres , tot_avg;
 popular = filter unioncrss by rel_cnt_A>$2;
 
 taskH = join popular by PersonA , facein by ID parallel 10;
+taskH = DISTINCT taskH;
 
 taskH = foreach taskH GENERATE name, rel_cnt_A , $2;
 
 dump taskH;
+
