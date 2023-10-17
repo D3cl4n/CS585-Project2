@@ -1,0 +1,12 @@
+facein= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/facein.csv' using PigStorage (',') as (ID:int,name:chararray,country:chararray,countrycode:chararray,hobby:chararray);
+associates= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/associates.csv' using PigStorage (',') as (FriendRel:int,PersonA_ID:int,PersonB_ID:int,DateOfFriendship:int,Desc:chararray);
+access= LOAD 'C:/Users/ganer/Documents/classes2023/fall/Big_data/access.csv' using PigStorage (',') as (AccessId:int,ByWho:int,WhatPage:int,TypeOfAccess:chararray,AccessTime:chararray);
+joinedtablesinner= join facein by ID, associates by PersonA_ID parallel 10;
+dump joinedtablesinner;
+jndtblsshort= foreach joinedtablesinner generate ID, name;
+joinedtablesleft= join jndtblsshort by ID LEFT, access by ByWho parallel 10;
+joinedtablesfilter = filter joinedtablesleft by ByWho IS NULL;
+dump joinedtablesfilter;
+taskF= foreach joinedtablesfilter generate ID, name;
+taskF_dist= DISTINCT taskF;
+dump taskF_dist;
