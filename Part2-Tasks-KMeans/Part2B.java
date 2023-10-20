@@ -102,7 +102,7 @@ public class Project2Part2B {
     }
 
     public void debug(String[] args) throws Exception {
-        long startTime = System.currentTimeMillis()
+        long startTime = System.currentTimeMillis();
         int KValue = 3;
         int R = 4; //number of Haloop iterations
         int count = 0;
