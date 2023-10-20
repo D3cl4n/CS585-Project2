@@ -16,7 +16,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 // The reducer will group the data point coordinates by using the (key,value) pair received from the mapper
 // The reducer will then calculate the new centroid that should be at the center of the data points that were grouped with it
 
-public class Project2Part2C {
+public class Part2C {
 
     private static int[][] KCentroids;
     private static boolean finished = false;
@@ -128,7 +128,7 @@ public class Project2Part2C {
             }
             Configuration conf = new Configuration();
             Job job = Job.getInstance(conf, "Part2C");
-            job.setJarByClass(Project2Part2C.class);
+            job.setJarByClass(Part2C.class);
             job.setMapperClass(KMeansMapper.class);
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
@@ -162,7 +162,7 @@ public class Project2Part2C {
             }
             Configuration conf = new Configuration();
             Job job = Job.getInstance(conf, "Part2C");
-            job.setJarByClass(Project2Part2C.class);
+            job.setJarByClass(Part2C.class);
             job.setMapperClass(KMeansMapper.class);
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);

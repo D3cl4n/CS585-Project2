@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 // The reducer will group the data point coordinates by using the (key,value) pair received from the mapper
 // The reducer will then calculate the new centroid that should be at the center of the data points that were grouped with it
 
-public class Project2Part2A {
+public class Part2A {
 
     private static int[][] KCentroids;
 
