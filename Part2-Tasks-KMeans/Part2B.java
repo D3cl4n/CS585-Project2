@@ -123,11 +123,7 @@ public class Project2Part2B {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path(args[0]));
-            if(finished) {
-                FileOutputFormat.setOutputPath(job, new Path(args[1]));
-            } else {
-                FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
-            }
+            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);
@@ -158,11 +154,7 @@ public class Project2Part2B {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path(args[0]));
-            if(finished) {
-                FileOutputFormat.setOutputPath(job, new Path(args[1]));
-            } else {
-                FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
-            }
+            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);

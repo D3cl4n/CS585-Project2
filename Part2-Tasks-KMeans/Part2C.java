@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.util.Random;
-import java.io.File;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -23,7 +22,7 @@ public class Project2Part2C {
     private static boolean finished = false;
     private static int KValue = 3;
     private static int R = 4;
-    private static double threshold = 500;
+    private static double threshold = 100;
     private static boolean withinThreshold = false;
 
     private static void generateKCentroids(int K, int rangeX, int rangeY) {
@@ -116,6 +115,7 @@ public class Project2Part2C {
     }
 
     public void debug(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
         int count = 0;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
@@ -134,11 +134,7 @@ public class Project2Part2C {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path(args[0]));
-            if(finished) {
-                FileOutputFormat.setOutputPath(job, new Path(args[1]));
-            } else {
-                FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
-            }
+            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
@@ -148,9 +144,12 @@ public class Project2Part2C {
             System.out.println("RValue:" + R);
             System.out.println("Count:" + count);
         }
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
     }
 
     public static void main(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
         int count = 0;
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
@@ -169,15 +168,17 @@ public class Project2Part2C {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path(args[0]));
-            if(finished) {
-                FileOutputFormat.setOutputPath(job, new Path(args[1]));
-            } else {
-                FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
-            }
+            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
+            if(withinThreshold) {
+                System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
+                break;
+            }
             count++;
             System.out.println("RValue:" + R);
             System.out.println("Count:" + count);
         }
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
     }
 }
