@@ -41,9 +41,36 @@ public class Part2A {
         return meanDistance;
     }
 
-    private static void calculateNeighborCentroid(String pointA_x, String pointY_x, int idx)
+    private static double calculateNeighborCentroid(String pointA_x, String pointY_x, int idx)
     {
+        int matchCount = 0;
+        double totalDistance = 0.0;
+        double[] meanDistances = new double[2]; //mean distances from point to all other centroids/clusters so K-1
+        for (int i=0; i<allDataPoints.length; i++)
+        {
+            double distance;
+            if (idx != i)
+            {
+                Pattern pattern = Pattern.compile("\\(\\d+,\\d+\\)");
+                Matcher m = pattern.matcher(allDataPoints[i]);
+                while (m.find())
+                {
+                    String x = pair.split(",")[0].replace("(", "");
+                    String y = pair.split(",")[1].replace(")", "");
+                    double distance = calculateEuclideanDistance(pointA_x, pointA_y, dataPointX, dataPointY);
+                    totalDistance += distance;
+                    matchCount++;
+                }
+                double meanDistance = calculateMeanDistance(totalDistance, matchCount);
+                meanDistances[i] = meanDistance;
+            }
+        }
+        if (meanDistances[0] < meanDistances[1])
+        {
+            return meanDistances[0];
+        }
 
+        return meanDistances[1];
     }
 
     private static void calculateSilhouetteValue(Text centroid, Text dataPoints)
@@ -78,7 +105,10 @@ public class Part2A {
         }
 
         double meanDistance = calculateMeanDistance(totalDistance, matchCount);
-        calculateNeighborCentroid(dataPointX, dataPointY, 0);
+        double minMeanDistance = calculateNeighborCentroid(dataPointX, dataPointY, 0);
+        double silhouetteValue = (minMeanDistance - meanDistance) / Math.max(minMeanDistance, meanDistance);
+
+        System.out.println("Silhouette value: " + silhouetteValue);
     }
 
     private static void generateKCentroids(int K, int rangeX, int rangeY) {
@@ -142,6 +172,10 @@ public class Part2A {
                 count++;
             }
 
+            if (globalCnt == 0)
+            {
+                calculateSilhouetteValue(key, dataPoints);
+            }
             allDataPoints[globalCnt] = dataPoints;
             globalCnt++;
 
