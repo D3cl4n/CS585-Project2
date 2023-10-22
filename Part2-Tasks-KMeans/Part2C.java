@@ -72,9 +72,9 @@ public class Part2C {
     public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
 
         private Text newCentroid = new Text();
-        private String dataPoints = "Data Points: ";
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            String dataPoints = "Data Points: ";
             int currentX = Integer.parseInt(key.toString().split(",")[0]);
             int currentY = Integer.parseInt(key.toString().split(",")[1]);
             int Xsum = 0;
