@@ -69,9 +69,9 @@ public class Part2B {
     public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
 
         private Text newCentroid = new Text();
-        private String dataPoints = "Data Points: ";
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            String dataPoints = "Data Points: ";
             int Xsum = 0;
             int Ysum = 0;
             int count = 0;
