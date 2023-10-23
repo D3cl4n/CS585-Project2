@@ -137,10 +137,10 @@ public class Part2D {
         FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
         FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2D.txt"));
 
+        int i = job.waitForCompletion(true) ? 0 : 1;
         long endTime = System.currentTimeMillis(); // Record the end time
         long executionTime = endTime - startTime;
         System.out.println("Job execution time: " + executionTime + " ms");
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
     public static void main(String[] args) throws Exception {
@@ -159,9 +159,9 @@ public class Part2D {
         FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
         FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2D.txt"));
 
+        int i = job.waitForCompletion(true) ? 0 : 1;
         long endTime = System.currentTimeMillis(); // Record the end time
         long executionTime = endTime - startTime;
         System.out.println("Job execution time: " + executionTime + " ms");
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
