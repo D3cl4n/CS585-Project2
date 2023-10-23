@@ -4,7 +4,7 @@ df = pd.read_csv('uscities.csv')
 # print(pd.options.display.max_rows)
 LatAndLong = df[['lat','lng']]
 # print(LatAndLong)
-# LatAndLong.to_csv('uscities_LatAndLong.csv')
+LatAndLong.to_csv('uscities_LatAndLong.csv',header=False,index=False)
 
 # Find the min and max of both the lat and long columns
 print('Maximum Latitude and Longitude:')
