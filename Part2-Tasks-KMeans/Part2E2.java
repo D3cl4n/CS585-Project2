@@ -86,10 +86,10 @@ public class Part2E2 {
                 Ysum += Integer.parseInt(csvLine[1]);
                 numDataPoint ++;
                 localdataPoints += "(" + val.toString() + ")\t"; //fetch the datapoints for the centroid
-                oldX = Integer.parseInt(keyLine[0]); // keep mapper centroid x, we will use it on the reducer
-                oldY = Integer.parseInt(keyLine[1]); // keep mapper centroid y, we will use it on the reducer
+                oldX = Integer.parseInt(keyLine[0]); // keep mapper centroid x, we will use it on the reducer, to compare it with the a new centroid x
+                oldY = Integer.parseInt(keyLine[1]); // keep mapper centroid y, we will use it on the reducer, to compare it with the a new centroid y
             }
-            Text localCentroid = new Text(Xsum + "," + Ysum + ","+numDataPoint+","+oldX+","+oldY);
+            Text localCentroid = new Text(Xsum + "," + Ysum + ","+numDataPoint+","+oldX+","+oldY); // partial sum of X, Y, number of data points, and non-aggregated mapper centroid values as an output
             context.write(localCentroid, new Text(localdataPoints));
 
         }
@@ -100,17 +100,17 @@ public class Part2E2 {
         //private String dataPoints =null;
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int numDataPoints = 0;
-            int currentX = Integer.parseInt(key.toString().split(",")[3]);
-            int currentY = Integer.parseInt(key.toString().split(",")[4]);
+            int oldX = Integer.parseInt(key.toString().split(",")[3]); //  centroid x from combiner but without aggregation which is same key value from mapper
+            int oldY = Integer.parseInt(key.toString().split(",")[4]); //  centroid y from combiner but without aggregation which is same key value from mapper
             int newX = 0;
             int newY = 0;
             String dataPoints="Data Points: ";
 
             for (Text val : values) {
                 String[] csvLine = key.toString().split(",");
-                int x = Integer.parseInt(csvLine[0]);
-                int y = Integer.parseInt(csvLine[1]);
-                int count = Integer.parseInt(csvLine[2]);
+                int x = Integer.parseInt(csvLine[0]); // partial sum of x from combiner
+                int y = Integer.parseInt(csvLine[1]); // partial sum of y from combiner
+                int count = Integer.parseInt(csvLine[2]); // number of data points from combiner
                 dataPoints += "(" + val.toString() + ")\t";
                 // Update the local sum for the centroid
                 newX += x;
@@ -123,9 +123,9 @@ public class Part2E2 {
                 newY /= numDataPoints;
             }
 
-            newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
-           // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
-            if(distanceFunction(new int[]{currentX, currentY}, new int[]{newX,newY}) < threshold) {
+            newCentroid.set("New Centroid: (" + newX + "," + newY + ")"); //set new centroid
+            // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
+            if(distanceFunction(new int[]{oldX, oldY}, new int[]{newX,newY}) < threshold) {
                 withinThreshold = true;
             } else {
                 withinThreshold = false;
@@ -136,7 +136,7 @@ public class Part2E2 {
             }
             else {
                 for (int i =0; i<KCentroids.length; i++) {
-                    if (currentX == KCentroids[i][0] && currentY == KCentroids[i][1]) {
+                    if (oldX == KCentroids[i][0] && oldY == KCentroids[i][1]) {
                         KCentroids[i][0] = newX;
                         KCentroids[i][1] = newY;
                     }
@@ -202,8 +202,8 @@ public class Part2E2 {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
+            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E2test.txt" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
