@@ -167,7 +167,7 @@ public class Part2E2 {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
-            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E2test.txt" + "_" + count));
+            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E2.txt" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
@@ -203,7 +203,7 @@ public class Part2E2 {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
-            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E2test.txt" + "_" + count));
+            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E2.txt" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
