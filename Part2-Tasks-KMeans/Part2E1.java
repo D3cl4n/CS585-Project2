@@ -166,7 +166,7 @@ public class Part2E1 {
     }
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
 
         Configuration mergeConf = new Configuration();

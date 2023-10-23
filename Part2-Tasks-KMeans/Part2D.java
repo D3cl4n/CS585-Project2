@@ -139,7 +139,7 @@ public class Part2D {
     public void debug(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         int KValue = 10;
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Part2D");
@@ -161,7 +161,7 @@ public class Part2D {
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         int KValue = 10;
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Part2D");

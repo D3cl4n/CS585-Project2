@@ -163,7 +163,7 @@ public class Part2E2 {
     public void debug(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         int count = 0;
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
         //Here is where we perform a Haloop
         while (count < R)
@@ -201,7 +201,7 @@ public class Part2E2 {
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         int count = 0;
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
         //Here is where we perform a Haloop
         while (count < R)

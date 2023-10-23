@@ -104,7 +104,7 @@ public class Part2A {
     public void debug(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         int KValue = 3; //test with 1, 10 and 100
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Part2A");
@@ -123,7 +123,7 @@ public class Part2A {
 
     public static void main(String[] args) throws Exception {
         int KValue = 3;
-        KCentroids = new int[KValue][2];
+        KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Part2A");
