@@ -19,6 +19,7 @@ public class Part2D {
         for (int n = 0; n < K; n++) {
             KCentroids[n][0] = rand.nextInt(rangeX + 1);
             KCentroids[n][1] = rand.nextInt(rangeY + 1);
+            KCentroids[n][2] = 0;
         }
     }
 
@@ -52,7 +53,8 @@ public class Part2D {
                 }
             }
         }
-       return new Text(KCentroids[closestCentroid][0] + "," + KCentroids[closestCentroid][1]);
+        KCentroids[closestCentroid][2] = 1;
+        return new Text(KCentroids[closestCentroid][0] + "," + KCentroids[closestCentroid][1]);
     }
 
     private static double distanceFunction(int[] dataPoint1, int[] dataPoint2) {
@@ -85,7 +87,9 @@ public class Part2D {
 
     public static class KMeansReducer extends Reducer<Text, Text, Text, Text> {
         private Text newCentroid = new Text();
-        private String dataPoints =null;
+        private String dataPoints = null;
+        private boolean firstPass = true;
+        private String centroidsWithNoPoints = "";
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int numDataPoints = 0;
             int newX = 0;
@@ -109,7 +113,18 @@ public class Part2D {
                 newY /= numDataPoints;
             }
 
-            newCentroid = new Text("New Centroid: (" + newX + "," + newY + ")");
+            // Print all centroids with no associated data points in the first line of the output
+            if(firstPass) {
+                for(int n = 0;n < KCentroids.length;n++) {
+                    if(KCentroids[n][2] == 0) {
+                        centroidsWithNoPoints += "Centroid with no data points: (" + KCentroids[n][0] + "," + KCentroids[n][1] + ")\n";
+                    }
+                }
+                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + newX + "," + newY + ")");
+                firstPass = false;
+            } else {
+                newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
+            }
             dataPoints = new String( "Data Points: "+localDP);
             context.write(newCentroid,new Text(dataPoints ));
             //  System.out.println(" #Dp: "+ numDataPoints);

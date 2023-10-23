@@ -27,6 +27,7 @@ public class Part2B {
         for(int n = 0;n < K;n++) {
             KCentroids[n][0] = rand.nextInt(rangeX + 1);
             KCentroids[n][1] = rand.nextInt(rangeY + 1);
+            KCentroids[n][2] = 0;
         }
     }
 
@@ -59,6 +60,7 @@ public class Part2B {
                 }
             }
         }
+        KCentroids[closestCentroid][2] = 1;
         return new Text(KCentroids[closestCentroid][0] + "," + KCentroids[closestCentroid][1]);
     }
 
@@ -69,6 +71,8 @@ public class Part2B {
     public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
 
         private Text newCentroid = new Text();
+        private boolean firstPass = true;
+        private String centroidsWithNoPoints = "";
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             String dataPoints = "Data Points: ";
@@ -82,7 +86,18 @@ public class Part2B {
                 Ysum += Integer.parseInt(csvLine[1]);
                 count++;
             }
-            newCentroid.set("New Centroid: (" + Xsum/count + "," + Ysum/count + ")");
+            // Print all centroids with no associated data points in the first line of the output
+            if(firstPass) {
+                for(int n = 0;n < KCentroids.length;n++) {
+                    if(KCentroids[n][2] == 0) {
+                        centroidsWithNoPoints += "Centroid with no data points: (" + KCentroids[n][0] + "," + KCentroids[n][1] + ")\n";
+                    }
+                }
+                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + Xsum / count + "," + Ysum / count + ")");
+                firstPass = false;
+            } else {
+                newCentroid.set("New Centroid: (" + Xsum / count + "," + Ysum / count + ")");
+            }
 
             if (finished) {
                 context.write(newCentroid, new Text(dataPoints));
@@ -122,8 +137,8 @@ public class Part2B {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("Part2-Task-KMeans/KMeansDataset.csv"));
+            FileOutputFormat.setOutputPath(job, new Path("Part2-Task-KMeans/output" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);
@@ -153,8 +168,8 @@ public class Part2B {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("Part2-Task-KMeans/KMeansDataset.csv"));
+            FileOutputFormat.setOutputPath(job, new Path("Part2-Task-KMeans/output" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);

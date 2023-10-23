@@ -23,7 +23,7 @@ public class Part2C {
     private static int KValue = 3;
     private static int R = 4;
     private static double threshold = 100;
-    private static boolean withinThreshold = false;
+    private static boolean withinThreshold = true;
 
     private static void generateKCentroids(int K, int rangeX, int rangeY) {
         Random rand = new Random();
@@ -72,6 +72,8 @@ public class Part2C {
     public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
 
         private Text newCentroid = new Text();
+        private boolean firstPass = true;
+        private String centroidsWithNoPoints = "";
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             String dataPoints = "Data Points: ";
@@ -90,12 +92,21 @@ public class Part2C {
             int newX = Xsum / count;
             int newY = Ysum / count;
 
-            newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
+            // Print all centroids with no associated data points in the first line of the output
+            if(firstPass) {
+                for(int n = 0;n < KCentroids.length;n++) {
+                    if(KCentroids[n][2] == 0) {
+                        centroidsWithNoPoints += "Centroid with no data points: (" + KCentroids[n][0] + "," + KCentroids[n][1] + ")\n";
+                    }
+                }
+                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + newX + "," + newY + ")");
+                firstPass = false;
+            } else {
+                newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
+            }
 
             // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
-            if(distanceFunction(new int[]{currentX, currentY}, new int[]{newX,newY}) < threshold) {
-                withinThreshold = true;
-            } else {
+            if(distanceFunction(new int[]{currentX, currentY}, new int[]{newX,newY}) > threshold) {
                 withinThreshold = false;
             }
 
@@ -133,12 +144,14 @@ public class Part2C {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("Part2-Task-KMeans/KMeansDataset.csv"));
+            FileOutputFormat.setOutputPath(job, new Path("Part2-Task-KMeans/output" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
                 break;
+            } else {
+                withinThreshold = true;
             }
             count++;
             System.out.println("RValue:" + R);
@@ -167,12 +180,14 @@ public class Part2C {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("Part2-Task-KMeans/KMeansDataset.csv"));
+            FileOutputFormat.setOutputPath(job, new Path("Part2-Task-KMeans/output" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
                 break;
+            } else {
+                withinThreshold = true;
             }
             count++;
             System.out.println("RValue:" + R);
