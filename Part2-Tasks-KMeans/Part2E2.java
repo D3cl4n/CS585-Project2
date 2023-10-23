@@ -23,13 +23,14 @@ public class Part2E2 {
     private static int KValue = 3;
     private static int R = 4;
     private static double threshold = 100;
-    private static boolean withinThreshold = false;
+    private static boolean withinThreshold = true;
 
     private static void generateKCentroids(int K, int rangeX, int rangeY) {
         Random rand = new Random();
         for(int n = 0;n < K;n++) {
             KCentroids[n][0] = rand.nextInt(rangeX + 1);
             KCentroids[n][1] = rand.nextInt(rangeY + 1);
+            KCentroids[n][2] = 0;
         }
     }
 
@@ -62,6 +63,7 @@ public class Part2E2 {
                 }
             }
         }
+        KCentroids[closestCentroid][2] = 1;
         return new Text(KCentroids[closestCentroid][0] + "," + KCentroids[closestCentroid][1]);
     }
 
@@ -97,6 +99,8 @@ public class Part2E2 {
     public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
 
         private Text newCentroid = new Text();
+        private boolean firstPass = true;
+        private String centroidsWithNoPoints = "";
         //private String dataPoints =null;
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int numDataPoints = 0;
@@ -123,11 +127,21 @@ public class Part2E2 {
                 newY /= numDataPoints;
             }
 
-            newCentroid.set("New Centroid: (" + newX + "," + newY + ")"); //set new centroid
-            // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
-            if(distanceFunction(new int[]{oldX, oldY}, new int[]{newX,newY}) < threshold) {
-                withinThreshold = true;
+            // Print all centroids with no associated data points in the first line of the output
+            if(firstPass) {
+                for(int n = 0;n < KCentroids.length;n++) {
+                    if(KCentroids[n][2] == 0) {
+                        centroidsWithNoPoints += "Centroid with no data points: (" + KCentroids[n][0] + "," + KCentroids[n][1] + ")\n";
+                    }
+                }
+                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + newX + "," + newY + ")");
+                firstPass = false;
             } else {
+                newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
+            }
+
+            // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
+            if(distanceFunction(new int[]{oldX, oldY}, new int[]{newX,newY}) > threshold) {
                 withinThreshold = false;
             }
 
@@ -172,6 +186,8 @@ public class Part2E2 {
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
                 break;
+            } else {
+                withinThreshold = true;
             }
             count++;
             System.out.println("RValue:" + R);
@@ -208,6 +224,8 @@ public class Part2E2 {
             if(withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + count + ".");
                 break;
+            } else {
+                withinThreshold = true;
             }
             count++;
             System.out.println("RValue:" + R);
