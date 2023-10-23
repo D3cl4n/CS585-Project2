@@ -21,20 +21,21 @@ public class Part2E1 {
 
     private static int[][] KCentroids;
     private static boolean finished = false;
-    private static int KValue = 3;
+    private static int KValue = 10;
     private static int R = 10;
-    private static double threshold = 100;
+    private static double threshold = 10;
     private static boolean withinThreshold = false;
-    private static int counter=0;
+    private static int counter = 0;
+
     private static void generateKCentroids(int K, int rangeX, int rangeY) {
         Random rand = new Random();
-        for(int n = 0;n < K;n++) {
+        for (int n = 0; n < K; n++) {
             KCentroids[n][0] = rand.nextInt(rangeX + 1);
             KCentroids[n][1] = rand.nextInt(rangeY + 1);
         }
     }
 
-    public static class KMeansMapper extends Mapper<Object, Text, Text, Text>{
+    public static class KMeansMapper extends Mapper<Object, Text, Text, Text> {
 
         private Text centroid = new Text();
         private Text dataPoint = new Text();
@@ -44,19 +45,19 @@ public class Part2E1 {
             // Determine which centroid this data point is closest to
             centroid.set(determineClosestCentroid(csvLine));
             dataPoint.set(value);
-            context.write(centroid,dataPoint);
+            context.write(centroid, dataPoint);
         }
     }
 
     private static Text determineClosestCentroid(String[] dataPoint) {
         // Use Euclidean Distance to determine which centroid is the closest to this data point
         int closestCentroid = 0;
-        int[] intDataPoint = {Integer.parseInt(dataPoint[0]),Integer.parseInt(dataPoint[1])};
-        double closestDistance = distanceFunction(KCentroids[0],intDataPoint);
+        int[] intDataPoint = {Integer.parseInt(dataPoint[0]), Integer.parseInt(dataPoint[1])};
+        double closestDistance = distanceFunction(KCentroids[0], intDataPoint);
         double currentDistance;
         if (KCentroids.length > 1) {
             for (int n = 1; n < KCentroids.length; n++) {
-                currentDistance = distanceFunction(KCentroids[n],intDataPoint);
+                currentDistance = distanceFunction(KCentroids[n], intDataPoint);
                 if (currentDistance < closestDistance) {
                     closestDistance = currentDistance;
                     closestCentroid = n;
@@ -67,17 +68,18 @@ public class Part2E1 {
     }
 
     private static double distanceFunction(int[] dataPoint1, int[] dataPoint2) {
-        return Math.sqrt(Math.pow(dataPoint1[0] - dataPoint2[0],2) + Math.pow(dataPoint1[1] - dataPoint2[1],2));
+        return Math.sqrt(Math.pow(dataPoint1[0] - dataPoint2[0], 2) + Math.pow(dataPoint1[1] - dataPoint2[1], 2));
     }
+
     public static class KMeansCombiner extends Reducer<Text, Text, Text, Text> {
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int Xsum = 0;
             int Ysum = 0;
-            int numDataPoint=0;
-            int oldX=0;
-            int oldY=0;
-            String localdataPoints="";
+            int numDataPoint = 0;
+            int oldX = 0;
+            int oldY = 0;
+            String localdataPoints = "";
 
             // Aggregate data points for the same centroid
             for (Text val : values) {
@@ -85,19 +87,21 @@ public class Part2E1 {
                 String[] keyLine = key.toString().split(",");
                 Xsum += Integer.parseInt(csvLine[0]);
                 Ysum += Integer.parseInt(csvLine[1]);
-                numDataPoint ++;
+                numDataPoint++;
                 localdataPoints += "(" + val.toString() + ")\t"; //fetch the datapoints for the centroid
                 oldX = Integer.parseInt(keyLine[0]); // keep mapper centroid x, we will use it on the reducer, to compare it with the a new centroid x
                 oldY = Integer.parseInt(keyLine[1]); // keep mapper centroid y, we will use it on the reducer, to compare it with the a new centroid y
             }
-            Text localCentroid = new Text(Xsum + "," + Ysum + ","+numDataPoint+","+oldX+","+oldY); // partial sum of X, Y, number of data points, and non-aggregated mapper centroid values as an output
+            Text localCentroid = new Text(Xsum + "," + Ysum + "," + numDataPoint + "," + oldX + "," + oldY); // partial sum of X, Y, number of data points, and non-aggregated mapper centroid values as an output
             context.write(localCentroid, new Text(localdataPoints));
 
         }
     }
-    public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
+
+    public static class KMeansReducer extends Reducer<Text, Text, Text, Text> {
         String convergenceStatus = "converged"; // Default to converged
         private Text newCentroid = new Text();
+
         //private String dataPoints =null;
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int numDataPoints = 0;
@@ -105,7 +109,7 @@ public class Part2E1 {
             int oldY = Integer.parseInt(key.toString().split(",")[4]); //  centroid y from combiner but without aggregation which is same key value from mapper
             int newX = 0;
             int newY = 0;
-            String dataPoints="Data Points: ";
+            String dataPoints = "Data Points: ";
 
             for (Text val : values) {
                 String[] csvLine = key.toString().split(",");
@@ -116,7 +120,7 @@ public class Part2E1 {
                 // Update the local sum for the centroid
                 newX += x;
                 newY += y;
-                numDataPoints +=count;
+                numDataPoints += count;
             }
 
             if (numDataPoints > 0) {
@@ -125,78 +129,37 @@ public class Part2E1 {
             }
 
             newCentroid.set("New Centroid: (" + newX + "," + newY + ")"); //set new centroid
-           // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
-            if(distanceFunction(new int[]{oldX, oldY}, new int[]{newX,newY}) < threshold) {
+            // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
+            if (distanceFunction(new int[]{oldX, oldY}, new int[]{newX, newY}) < threshold) {
                 withinThreshold = true;
             } else {
                 withinThreshold = false;
-                convergenceStatus = "not converged";           }
+                convergenceStatus = "not converged";
+            }
 
             if (finished) {
-                context.write(new Text("After " + (counter+1) + " iterations: \n" + newCentroid), new Text(withinThreshold ? " Converged" : " Not Converged"));     }
-            else {
-                for (int i =0; i<KCentroids.length; i++) {
+                context.write(new Text("After " + (counter + 1) + " iterations: \n" + newCentroid), new Text(withinThreshold ? " Converged" : " Not Converged"));
+            } else {
+                for (int i = 0; i < KCentroids.length; i++) {
                     if (oldX == KCentroids[i][0] && oldY == KCentroids[i][1]) {
                         KCentroids[i][0] = newX;
                         KCentroids[i][1] = newY;
                     }
                 }
-                context.write(new Text("After " + (counter+1) + " iterations: \n" + newCentroid), new Text(withinThreshold ? " Converged" : " Not Converged"));       }
+                context.write(new Text("After " + (counter + 1) + " iterations: \n" + newCentroid), new Text(withinThreshold ? " Converged" : " Not Converged"));
+            }
         }
     }
-
- /* public void debug(String[] args) throws Exception {
-        long startTime = System.currentTimeMillis();
-        KCentroids = new int[KValue][2];
-        generateKCentroids(KValue, 10000, 10000);
-        //Here is where we perform a Haloop
-        while (counter < R)
-        {
-            if (counter == (R - 1)) // last iteration set boolean to true
-            {
-                finished = true;
-            }
-            Configuration conf = new Configuration();
-            Job job = Job.getInstance(conf, "Part2E1");
-            job.setJarByClass(Part2E1.class);
-            job.setMapperClass(KMeansMapper.class);
-            job.setCombinerClass(KMeansCombiner.class);
-            job.setReducerClass(KMeansReducer.class);
-            job.setOutputKeyClass(Text.class);
-            job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
-            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E1.txt" + "_" + counter));
-            int i = job.waitForCompletion(true) ? 0 : 1;
-            if(withinThreshold) {
-                System.out.println("Algorithm terminated due to convergence after iteration " + counter + ".");
-                break;
-            }
-            counter++;
-            System.out.println("RValue:" + R);
-            System.out.println("Count:" + counter);
-        }
-        Configuration mergeConf = new Configuration();
-        FileSystem hdfs = FileSystem.get(mergeConf);
-        Path srcDir = new Path("hdfs://localhost:9000/project2/");
-        Path dstFile = new Path("file:///path/to/local/merged_output.txt"); // Specify a local file path
-      //Path dstFile = new Path("hdfs://localhost:9000/project2/merged_output.txt");
-        FileUtil.copyMerge(hdfs, srcDir, hdfs, dstFile, false, mergeConf, null);
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
-        //   System.exit(job.waitForCompletion(true) ? 0 : 1);
-    }
-
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         KCentroids = new int[KValue][2];
         generateKCentroids(KValue, 10000, 10000);
-        //Here is where we perform a Haloop
-        while (counter < R)
-        {
-            if (counter == (R - 1)) // last iteration set boolean to true
-            {
-                finished = true;
-            }
+
+        Configuration mergeConf = new Configuration();
+        FileSystem hdfs = FileSystem.get(new URI("hdfs://localhost:9000"), mergeConf);
+        //FileSystem fs = FileSystem.get(new URI("hdfs://localhost:9000"),conf)
+
+        while (counter < R) {
             Configuration conf = new Configuration();
             Job job = Job.getInstance(conf, "Part2E1");
             job.setJarByClass(Part2E1.class);
@@ -206,63 +169,24 @@ public class Part2E1 {
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
             FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
-            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/Part2E1.txt" + "_" + counter));
+            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/tmp/temp" + "_" + counter));
             int i = job.waitForCompletion(true) ? 0 : 1;
-            if(withinThreshold) {
+
+            if (withinThreshold) {
                 System.out.println("Algorithm terminated due to convergence after iteration " + counter + ".");
                 break;
             }
+
             counter++;
             System.out.println("RValue:" + R);
             System.out.println("Count:" + counter);
         }
-        Configuration mergeConf = new Configuration();
-        FileSystem hdfs = FileSystem.get(mergeConf);
-        Path srcDir = new Path("hdfs://localhost:9000/project2/");
-        Path dstFile = new Path("file:///path/to/local/merged_output.txt"); // Specify a local file path
-     // Path dstFile = new Path("hdfs://localhost:9000/project2/merged_output.txt");
-        FileUtil.copyMerge(hdfs, srcDir, hdfs, dstFile, false, mergeConf, null);
+
+        // Path srcDir = new Path("hdfs://localhost:9000/project2/temp" + "_" + counter);
+        Path srcDir = new Path("hdfs://localhost:9000/project2/tmp/temp"+ "_" + counter);
+        Path dstFile = new Path("hdfs://localhost:9000/project2/Part2E1.txt");
+        FileUtil.copyMerge(hdfs, srcDir, hdfs, dstFile, true, mergeConf, null);
         long endTime = System.currentTimeMillis();
         System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
-    } */
- public static void main(String[] args) throws Exception {
-     long startTime = System.currentTimeMillis();
-     KCentroids = new int[KValue][2];
-     generateKCentroids(KValue, 10000, 10000);
-
-     Configuration mergeConf = new Configuration();
-     FileSystem hdfs = FileSystem.get(new URI("hdfs://localhost:9000"),mergeConf);
-     //FileSystem fs = FileSystem.get(new URI("hdfs://localhost:9000"),conf)
-
-     while (counter < R) {
-         Configuration conf = new Configuration();
-         Job job = Job.getInstance(conf, "Part2E1");
-         job.setJarByClass(Part2E1.class);
-         job.setMapperClass(KMeansMapper.class);
-         job.setCombinerClass(KMeansCombiner.class);
-         job.setReducerClass(KMeansReducer.class);
-         job.setOutputKeyClass(Text.class);
-         job.setOutputValueClass(Text.class);
-         FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
-         FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/tmp/temp" + "_" + counter));
-         int i = job.waitForCompletion(true) ? 0 : 1;
-
-         if (withinThreshold) {
-             System.out.println("Algorithm terminated due to convergence after iteration " + counter + ".");
-             break;
-         }
-
-         counter++;
-         System.out.println("RValue:" + R);
-         System.out.println("Count:" + counter);
-     }
-
-    // Path srcDir = new Path("hdfs://localhost:9000/project2/temp" + "_" + counter);
-     Path srcDir = new Path("hdfs://localhost:9000/project2/tmp/temp*");
-     Path dstFile = new Path("hdfs://localhost:9000/project2/Part2E1.txt");
-     FileUtil.copyMerge(hdfs, srcDir, hdfs, dstFile, true, mergeConf, null);
-     long endTime = System.currentTimeMillis();
-     System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
- }
-
+    }
 }
