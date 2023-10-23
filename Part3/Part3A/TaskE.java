@@ -18,13 +18,13 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 // The reducer will group the data point coordinates by using the (key,value) pair received from the mapper
 // The reducer will then calculate the new centroid that should be at the center of the data points that were grouped with it
 
-public class TaskC {
+public class TaskE {
 
     private static double[][] KCentroids;
     private static boolean finished = false;
     private static int KValue = 3;
     private static int R = 4;
-    private static double threshold = 10;
+    private static double threshold = 100;
     private static boolean withinThreshold = false;
 
     private static void generateKCentroids(int K, double upperX, double lowerX, double upperY, double lowerY) {
@@ -71,29 +71,62 @@ public class TaskC {
     private static double distanceFunction(double[] dataPoint1, double[] dataPoint2) {
         return Math.sqrt(Math.pow(dataPoint1[0] - dataPoint2[0],2) + Math.pow(dataPoint1[1] - dataPoint2[1],2));
     }
+    public static class KMeansCombiner extends Reducer<Text, Text, Text, Text> {
 
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            double Xsum = 0;
+            double Ysum = 0;
+            int numDataPoint=0;
+            double oldX=0;
+            double oldY=0;
+            String localdataPoints="";
+
+            // Aggregate data points for the same centroid
+            for (Text val : values) {
+                String[] csvLine = val.toString().split(",");
+                String[] keyLine = key.toString().split(",");
+                Xsum += Double.parseDouble(csvLine[0]);
+                Ysum += Double.parseDouble(csvLine[1]);
+                numDataPoint ++;
+                localdataPoints += "(" + val.toString() + ")\t"; //fetch the datapoints for the centroid
+                oldX = Double.parseDouble(keyLine[0]); // keep mapper centroid x, we will use it on the reducer, to compare it with the a new centroid x
+                oldY = Double.parseDouble(keyLine[1]); // keep mapper centroid y, we will use it on the reducer, to compare it with the a new centroid y
+            }
+            Text localCentroid = new Text(Xsum + "," + Ysum + ","+numDataPoint+","+oldX+","+oldY); // partial sum of X, Y, number of data points, and non-aggregated mapper centroid values as an output
+            context.write(localCentroid, new Text(localdataPoints));
+
+        }
+    }
     public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
 
         private Text newCentroid = new Text();
         private boolean firstPass = true;
         private String centroidsWithNoPoints = "";
-
+        //private String dataPoints =null;
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-            String dataPoints = "Data Points: ";
-            double currentX = Double.parseDouble(key.toString().split(",")[0]);
-            double currentY = Double.parseDouble(key.toString().split(",")[1]);
-            double Xsum = 0;
-            double Ysum = 0;
-            int count = 0;
+            int numDataPoints = 0;
+            double oldX = Double.parseDouble(key.toString().split(",")[3]); //  centroid x from combiner but without aggregation which is same key value from mapper
+            double oldY = Double.parseDouble(key.toString().split(",")[4]); //  centroid y from combiner but without aggregation which is same key value from mapper
+            double newX = 0;
+            double newY = 0;
+            String dataPoints="Data Points: ";
+
             for (Text val : values) {
+                String[] csvLine = key.toString().split(",");
+                double x = Double.parseDouble(csvLine[0]); // partial sum of x from combiner
+                double y = Double.parseDouble(csvLine[1]); // partial sum of y from combiner
+                int count = Integer.parseInt(csvLine[2]); // number of data points from combiner
                 dataPoints += "(" + val.toString() + ")\t";
-                String[] csvLine = val.toString().split(",");
-                Xsum += Double.parseDouble(csvLine[0]);
-                Ysum += Double.parseDouble(csvLine[1]);
-                count++;
+                // Update the local sum for the centroid
+                newX += x;
+                newY += y;
+                numDataPoints +=count;
             }
-            double newX = Xsum / count;
-            double newY = Ysum / count;
+
+            if (numDataPoints > 0) {
+                newX /= numDataPoints;
+                newY /= numDataPoints;
+            }
 
             // Print all centroids with no associated data points in the first line of the output
             if(firstPass) {
@@ -102,14 +135,14 @@ public class TaskC {
                         centroidsWithNoPoints += "Centroid with no data points: (" + KCentroids[n][0] + "," + KCentroids[n][1] + ")\n";
                     }
                 }
-                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + Xsum / count + "," + Ysum / count + ")");
+                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + newX + "," + newY + ")");
                 firstPass = false;
             } else {
-                newCentroid.set("New Centroid: (" + Xsum / count + "," + Ysum / count + ")");
+                newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
             }
 
             // Check to see if the new centroid has moved a distance greater than the threshold from the old centroid
-            if(distanceFunction(new double[]{currentX, currentY}, new double[]{newX,newY}) < threshold) {
+            if(distanceFunction(new double[]{oldX, oldY}, new double[]{newX,newY}) < threshold) {
                 withinThreshold = true;
             } else {
                 withinThreshold = false;
@@ -120,7 +153,7 @@ public class TaskC {
             }
             else {
                 for (int i =0; i<KCentroids.length; i++) {
-                    if (currentX == KCentroids[i][0] && currentY == KCentroids[i][1]) {
+                    if (oldX == KCentroids[i][0] && oldY == KCentroids[i][1]) {
                         KCentroids[i][0] = newX;
                         KCentroids[i][1] = newY;
                     }
@@ -143,9 +176,10 @@ public class TaskC {
                 finished = true;
             }
             Configuration conf = new Configuration();
-            Job job = Job.getInstance(conf, "TaskC");
-            job.setJarByClass(TaskC.class);
+            Job job = Job.getInstance(conf, "TaskE");
+            job.setJarByClass(TaskE.class);
             job.setMapperClass(KMeansMapper.class);
+            job.setCombinerClass(KMeansCombiner.class);
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
@@ -162,6 +196,7 @@ public class TaskC {
         }
         long endTime = System.currentTimeMillis();
         System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
+        //   System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
     public static void main(String[] args) throws Exception {
@@ -177,9 +212,10 @@ public class TaskC {
                 finished = true;
             }
             Configuration conf = new Configuration();
-            Job job = Job.getInstance(conf, "TaskC");
-            job.setJarByClass(TaskC.class);
+            Job job = Job.getInstance(conf, "TaskE");
+            job.setJarByClass(TaskE.class);
             job.setMapperClass(KMeansMapper.class);
+            job.setCombinerClass(KMeansCombiner.class);
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);

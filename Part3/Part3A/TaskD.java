@@ -1,6 +1,7 @@
 package Part3A;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -11,13 +12,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-// For K-Means, we'll use one mapper to read the list of data points we generate
-// Before the mapper runs, we will generate the initial list of K centroids
-// The mapper should output a (key,value) pair of (centroid coordinates, data point coordinates)
-// The reducer will group the data point coordinates by using the (key,value) pair received from the mapper
-// The reducer will then calculate the new centroid that should be at the center of the data points that were grouped with it
-
-public class TaskA {
+public class TaskD {
 
     private static double[][] KCentroids;
 
@@ -29,7 +24,7 @@ public class TaskA {
         }
     }
 
-    public static class KMeansMapper extends Mapper<Object, Text, Text, Text>{
+    public static class KMeansMapper extends Mapper<Object, Text, Text, Text> {
 
         private Text centroid = new Text();
         private Text dataPoint = new Text();
@@ -39,7 +34,8 @@ public class TaskA {
             // Determine which centroid this data point is closest to
             centroid.set(determineClosestCentroid(csvLine));
             dataPoint.set(value);
-            context.write(centroid,dataPoint);
+            context.write(centroid, dataPoint);
+            // System.out.println("centroid:"+centroid);
         }
     }
 
@@ -66,24 +62,58 @@ public class TaskA {
         return Math.sqrt(Math.pow(dataPoint1[0] - dataPoint2[0],2) + Math.pow(dataPoint1[1] - dataPoint2[1],2));
     }
 
-    public static class KMeansReducer extends Reducer<Text,Text,Text,Text> {
-
-        private Text newCentroid = new Text();
-        private boolean firstPass = true;
-        private String centroidsWithNoPoints = "";
+    public static class KMeansCombiner extends Reducer<Text, Text, Text, Text> {
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-            String dataPoints = "Data Points: ";
             double Xsum = 0;
             double Ysum = 0;
-            int count = 0;
+            int numDataPoint=0;
+            String localdataPoints="";
+
+            // Aggregate data points for the same centroid
             for (Text val : values) {
-                dataPoints += "(" + val.toString() + ")\t";
                 String[] csvLine = val.toString().split(",");
                 Xsum += Double.parseDouble(csvLine[0]);
                 Ysum += Double.parseDouble(csvLine[1]);
-                count++;
+                numDataPoint ++;
+                localdataPoints += "(" + val.toString() + ")\t"; //fetch the datapoints for the centroid
             }
+            // System.out.println("Combiner #Dp: "+ numDataPoint);
+            Text localCentroid = new Text(Xsum + "," + Ysum + ","+numDataPoint);
+            context.write(localCentroid, new Text(localdataPoints));
+            //  System.out.println("localCentroid "+ localCentroid+"Combiner dataPoints: "+ localdataPoints);
+
+        }
+    }
+
+    public static class KMeansReducer extends Reducer<Text, Text, Text, Text> {
+        private Text newCentroid = new Text();
+        private boolean firstPass = true;
+        private String centroidsWithNoPoints = "";
+        private String dataPoints =null;
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            int numDataPoints = 0;
+            double newX = 0;
+            double newY = 0;
+            String localDP="";
+
+            for (Text val : values) {
+                String[] csvLine = key.toString().split(",");
+                double x = Double.parseDouble(csvLine[0]);
+                double y = Double.parseDouble(csvLine[1]);
+                int count = Integer.parseInt(csvLine[2]);
+                localDP += "(" + val.toString() + ")\t";
+                // Update the local sum for the centroid
+                newX += x;
+                newY += y;
+                numDataPoints +=count;
+            }
+
+            if (numDataPoints > 0) {
+                newX /= numDataPoints;
+                newY /= numDataPoints;
+            }
+
             // Print all centroids with no associated data points in the first line of the output
             if(firstPass) {
                 for(int n = 0;n < KCentroids.length;n++) {
@@ -91,64 +121,64 @@ public class TaskA {
                         centroidsWithNoPoints += "Centroid with no data points: (" + KCentroids[n][0] + "," + KCentroids[n][1] + ")\n";
                     }
                 }
-                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + Xsum / count + "," + Ysum / count + ")");
+                newCentroid.set(centroidsWithNoPoints + "New Centroid: (" + newX + "," + newY + ")");
                 firstPass = false;
             } else {
-                newCentroid.set("New Centroid: (" + Xsum / count + "," + Ysum / count + ")");
+                newCentroid.set("New Centroid: (" + newX + "," + newY + ")");
             }
-            context.write(newCentroid, new Text(dataPoints));
+
+            dataPoints = new String( "Data Points: "+localDP);
+            context.write(newCentroid,new Text(dataPoints));
+            //  System.out.println(" #Dp: "+ numDataPoints);
+            // Emit data points without aggregation
+//            for (Text val : values) {
+//                context.write(key, val);
+//            }
+
         }
     }
 
     public void debug(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        int KValue = 3; //test with 1, 10 and 100
+        int KValue = 10;
         KCentroids = new double[KValue][3];
-        // Maximum Lat and Long
-        // lat     71.2727
-        // lng    174.1110
-        // Minimum Lat and Long
-        // lat     17.9559
-        // lng   -176.6295
         generateKCentroids(KValue, 71.2727, 17.9559, 174.1110, -176.6295);
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "TaskA");
-        job.setJarByClass(TaskA.class);
+        Job job = Job.getInstance(conf, "TaskD");
+        job.setJarByClass(TaskD.class);
         job.setMapperClass(KMeansMapper.class);
-//        job.setCombinerClass(KMeansReducer.class);
+        job.setCombinerClass(KMeansCombiner.class); // Use the combiner for centroids
         job.setReducerClass(KMeansReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-        FileInputFormat.addInputPath(job, new Path("uscities_LatAndLong.csv");
+        FileInputFormat.addInputPath(job, new Path("uscities_LatAndLong.csv"));
         FileOutputFormat.setOutputPath(job, new Path("output"));
-        int i = job.waitForCompletion(true) ? 0 : 1;
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
+
+        long endTime = System.currentTimeMillis(); // Record the end time
+        long executionTime = endTime - startTime;
+        System.out.println("Job execution time: " + executionTime + " ms");
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        int KValue = 3; //test with 1, 10 and 100
+        int KValue = 10;
         KCentroids = new double[KValue][3];
-        // Maximum Lat and Long
-        // lat     71.2727
-        // lng    174.1110
-        // Minimum Lat and Long
-        // lat     17.9559
-        // lng   -176.6295
         generateKCentroids(KValue, 71.2727, 17.9559, 174.1110, -176.6295);
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "TaskA");
-        job.setJarByClass(TaskA.class);
+        Job job = Job.getInstance(conf, "TaskD");
+        job.setJarByClass(TaskD.class);
         job.setMapperClass(KMeansMapper.class);
-//        job.setCombinerClass(KMeansReducer.class);
+        job.setCombinerClass(KMeansCombiner.class); // Use the combiner for centroids
         job.setReducerClass(KMeansReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-        FileInputFormat.addInputPath(job, new Path("uscities_LatAndLong.csv");
+        FileInputFormat.addInputPath(job, new Path("uscities_LatAndLong.csv"));
         FileOutputFormat.setOutputPath(job, new Path("output"));
-        int i = job.waitForCompletion(true) ? 0 : 1;
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
+
+        long endTime = System.currentTimeMillis(); // Record the end time
+        long executionTime = endTime - startTime;
+        System.out.println("Job execution time: " + executionTime + " ms");
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }

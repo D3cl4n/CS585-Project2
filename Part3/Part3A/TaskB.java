@@ -138,8 +138,8 @@ public class TaskB {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("uscities_LatAndLong.csv");
+            FileOutputFormat.setOutputPath(job, new Path("output" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);
@@ -169,8 +169,8 @@ public class TaskB {
             job.setReducerClass(KMeansReducer.class);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(Text.class);
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + count));
+            FileInputFormat.addInputPath(job, new Path("uscities_LatAndLong.csv");
+            FileOutputFormat.setOutputPath(job, new Path("output" + "_" + count));
             int i = job.waitForCompletion(true) ? 0 : 1;
             count++;
             System.out.println("RValue:" + R);
