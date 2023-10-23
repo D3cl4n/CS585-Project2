@@ -6,7 +6,7 @@ def main():
     # Get today's date.
     today = datetime.today()
 
-    # Create a dictionary to store the WhatPage IDs that have been visited within the last 90 days
+    # Create a dictionary to store the ByWho IDs that have been visited within the last 90 days
     pageIDs = {}
 
     # Open the CSV file.
@@ -26,9 +26,9 @@ def main():
             # Check if the date field is within 90 days of today.
             if date_field_datetime >= today - timedelta(days=90) and date_field_datetime <= today:
 
-                # Add the WhatPage ID to the dictionary if it's not there
-                if row[2] not in pageIDs:
-                    pageIDs[row[2]] = 1
+                # Add the ByWho ID to the dictionary if it's not there
+                if row[1] not in pageIDs:
+                    pageIDs[row[1]] = 1
 
     # Close the CSV file.
     access.close()
