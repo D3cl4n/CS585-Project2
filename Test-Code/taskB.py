@@ -3,9 +3,11 @@ def main():
 
     # Create a dictionary to store the occurrences of each field value.
     occurrences = {}
+    #list of popularity counts for each page
+    counts = []
 
     # Open the CSV file.
-    with open("C:/Users/Rakesh/IdeaProjects/CS585-Project2/datasets/access.csv", "r") as access:
+    with open("/mnt/c/Users/D3cl4n/CS585-Project2/datasets/access.csv", "r") as access:
         reader = csv.reader(access)
 
         # Loop through the rows in the CSV file.
@@ -36,13 +38,13 @@ def main():
         mostPopularPages[i] = sorted_occurrences[i][0]
 
     # Need to loop through facein.csv and print the ID, Name, and Nationality now of the most popular pages
-    with open("C:/Users/Rakesh/IdeaProjects/CS585-Project2/datasets/facein.csv", "r") as facein:
+    with open("/mnt/c/Users/D3cl4n/CS585-Project2/datasets/facein.csv", "r") as facein:
         reader = csv.reader(facein)
 
         for row in reader:
             pageID = row[0]
             if pageID in mostPopularPages:
-                print(row[0] + "," + row[1] + "," + row[2])
+                print(row[0] + "," + row[1] + "," + row[2] + " popularity count: " + str(occurrences[row[0]]))
 
     facein.close()
 
