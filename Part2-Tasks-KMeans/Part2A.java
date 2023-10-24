@@ -116,12 +116,13 @@ public class Part2A {
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path("Part2-Task-KMeans/KMeansDataset.csv"));
         FileOutputFormat.setOutputPath(job, new Path("Part2-Task-KMeans/output"));
+        int i = job.waitForCompletion(true) ? 0 : 1;
         long endTime = System.currentTimeMillis();
         System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
     public static void main(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
         int KValue = 3;
         KCentroids = new int[KValue][3];
         generateKCentroids(KValue, 10000, 10000);
@@ -135,6 +136,8 @@ public class Part2A {
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path("Part2-Task-KMeans/KMeansDataset.csv"));
         FileOutputFormat.setOutputPath(job, new Path("Part2-Task-KMeans/output"));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        int i = job.waitForCompletion(true) ? 0 : 1;
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
     }
 }
