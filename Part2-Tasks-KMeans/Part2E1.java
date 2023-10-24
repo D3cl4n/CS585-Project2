@@ -21,7 +21,7 @@ public class Part2E1 {
 
     private static int[][] KCentroids;
     private static boolean finished = false;
-    private static int KValue = 10;
+    private static int KValue = 3;
     private static int R = 10;
     private static double threshold = 10;
     private static boolean withinThreshold = true;
@@ -163,6 +163,47 @@ public class Part2E1 {
                 context.write(new Text("After " + (counter + 1) + " iterations: \n" + newCentroid), new Text(withinThreshold ? " Converged" : " Not Converged"));
             }
         }
+    }
+    public void debug(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
+        KCentroids = new int[KValue][3];
+        generateKCentroids(KValue, 10000, 10000);
+
+        Configuration mergeConf = new Configuration();
+        FileSystem hdfs = FileSystem.get(new URI("hdfs://localhost:9000"), mergeConf);
+        //FileSystem fs = FileSystem.get(new URI("hdfs://localhost:9000"),conf)
+
+        while (counter < R) {
+            Configuration conf = new Configuration();
+            Job job = Job.getInstance(conf, "Part2E1");
+            job.setJarByClass(Part2E1.class);
+            job.setMapperClass(KMeansMapper.class);
+            job.setCombinerClass(KMeansCombiner.class);
+            job.setReducerClass(KMeansReducer.class);
+            job.setOutputKeyClass(Text.class);
+            job.setOutputValueClass(Text.class);
+            FileInputFormat.addInputPath(job, new Path("C:///Users/ganer/Documents/classes2023/fall/Big_data/KMeansDataset.csv"));
+            FileOutputFormat.setOutputPath(job, new Path("hdfs://localhost:9000/project2/tmp/temp" + "_" + counter));
+            int i = job.waitForCompletion(true) ? 0 : 1;
+
+            if (withinThreshold) {
+                System.out.println("Algorithm terminated due to convergence after iteration " + counter + ".");
+                break;
+            } else {
+                withinThreshold = true;
+            }
+
+            counter++;
+            System.out.println("RValue:" + R);
+            System.out.println("Count:" + counter);
+        }
+
+        // Path srcDir = new Path("hdfs://localhost:9000/project2/temp" + "_" + counter);
+        Path srcDir = new Path("hdfs://localhost:9000/project2/tmp/temp"+ "_" + counter);
+        Path dstFile = new Path("hdfs://localhost:9000/project2/Part2E1.txt");
+        FileUtil.copyMerge(hdfs, srcDir, hdfs, dstFile, true, mergeConf, null);
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total Execution Time: " + (endTime - startTime) + "ms");
     }
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
